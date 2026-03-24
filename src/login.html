@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Sign up</title>
+</head>
+
+<body class="auth-body">
+
+    <div class="auth-container">
+
+        <!-- LOGO -->
+        <div class="auth-logo">
+            <img src="./img/logo.png" alt="">
+            <a href="index.html" class="logo-link">ToDoList</a>
+        </div>
+
+        <h1>Sign up</h1>
+
+        <!-- SOCIAL BUTTONS -->
+        <div class="social-buttons">
+            <button id="googleLogin" type="button" class="social-btn">
+                Continue with Google
+            </button>
+
+            <button id="facebookLogin" type="button" class="social-btn">
+                Continue with Facebook
+            </button>
+
+            <button type="button" class="social-btn">
+                Continue with Apple
+            </button>
+        </div>
+
+        <div class="divider-line"></div>
+
+        <!-- FORM -->
+        <form class="auth-form" id="loginForm">
+
+            <label>Email</label>
+            <input id="email" type="email" required>
+
+            <label>Password</label>
+            <input id="password" type="password" required>
+
+            <p class="error" id="errorMsg"></p>
+
+            <button type="submit" class="btn auth-btn">Login</button>
+
+            <p class="login-link">
+                Don't have an account? 
+                <a href="signup.html">Create account</a>
+            </p>
+
+        </form>
+
+        <p class="terms">
+            By continuing with Google, Apple, or Email, you agree to Todoist’s 
+            <a href="#">Terms of Service</a> and 
+            <a href="#">Privacy Policy</a>.
+        </p>
+
+        <div class="divider-line"></div>
+
+        <p class="login-link">
+            Already signed up? 
+            <a href="#" onclick="loginUser()">Go to login</a>
+        </p>
+
+    </div>
+
+</body>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { 
+    getAuth, 
+    signInWithPopup, 
+    GoogleAuthProvider,
+    FacebookAuthProvider,
+    createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDCowNCQIA_GlY44S-7F_oF7TvkQmCSPTM",
+    authDomain: "todo-ac586.firebaseapp.com",
+    projectId: "todo-ac586",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+/* 🔵 GOOGLE */
+const googleProvider = new GoogleAuthProvider();
+
+document.getElementById("googleLogin").onclick = async () => {
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        window.location.href = "dashboard.html";
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+/* 🔵 FACEBOOK */
+const facebookProvider = new FacebookAuthProvider();
+facebookProvider.addScope('public_profile');
+
+document.getElementById("facebookLogin").onclick = async () => {
+    try {
+        const result = await signInWithPopup(auth, facebookProvider);
+        window.location.href = "dashboard.html";
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+/* 🔐 EMAIL/SENHA */
+const form = document.querySelector(".auth-form");
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    try {
+        await createUserWithEmailAndPassword(auth, email, password);
+
+        alert("Conta criada com sucesso!");
+        window.location.href = "dashboard.html";
+
+    } catch (error) {
+        alert(error.message);
+        console.error(error);
+    }
+});
+</script>
+</html>
