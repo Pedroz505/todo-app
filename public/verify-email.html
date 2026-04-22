@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify Email</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<div class="auth-form">
+
+    <h2>Verify your email</h2>
+
+    <p id="userEmail">
+        We sent a verification link to your email.
+        Check your inbox and confirm your account.
+    </p>
+
+    <!-- BOTÃO REENVIAR -->
+    <button id="resendBtn" class="btn auth-btn">
+        Resend verification email
+    </button>
+
+    <p id="msg"></p>
+
+    <!-- VOLTAR PARA LOGIN -->
+    <p class="login-link">Wrong email?</p>
+    <button id="backToLogin" class="btn">Go to login</button>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { 
+    getAuth,
+    sendEmailVerification,
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+const app = initializeApp({
+    apiKey: "AIzaSyDCowNCQIA_GlY44S-7F_oF7TvkQmCSPTM",
+    authDomain: "todo-ac586.firebaseapp.com",
+    projectId: "todo-ac586",
+});
+
+const auth = getAuth(app);
+
+const msg = document.getElementById("msg");
+const emailText = document.getElementById("userEmail");
+
+/* 🔐 VERIFICA USUÁRIO */
+onAuthStateChanged(auth, (user) => {
+
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    // mostra email do usuário
+    emailText.textContent = `We sent a verification link to ${user.email}. Check your inbox and confirm your account.`;
+});
+
+/* 📩 REENVIAR EMAIL */
+document.getElementById("resendBtn").onclick = async () => {
+    const user = auth.currentUser;
+
+    if (user) {
+        await sendEmailVerification(user);
+        msg.textContent = "Verification email sent again.";
+    }
+};
+
+/* 🚪 VOLTAR PARA LOGIN (COM LOGOUT) */
+document.getElementById("backToLogin").onclick = async () => {
+    await signOut(auth);
+    window.location.href = "login.html";
+};
+
+/* 🔄 VERIFICAÇÃO AUTOMÁTICA */
+setInterval(async () => {
+    const user = auth.currentUser;
+
+    if (user) {
+        await user.reload();
+
+        if (user.emailVerified) {
+            window.location.href = "dashboard.html";
+        }
+    }
+}, 3000);
+</script>
+
+</body>
+</html>
