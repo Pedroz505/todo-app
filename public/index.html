@@ -10,6 +10,18 @@
     <link rel="icon" href="./img/favicon.png" type="image/png">
 </head>
 
+<script>
+const elements = document.querySelectorAll(".animate, .animate-zoom");
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        entry.target.classList.toggle("show", entry.isIntersecting);
+    });
+});
+
+elements.forEach(el => observer.observe(el));
+</script>
+
 <body>
 
    <header>
@@ -17,21 +29,25 @@
             <nav class="navbar">
 
                 <div class="nav-left">
-                    <img 
-                        src="./img/logo.png" 
-                        alt="logo ToDoList"
-                        class="logo"
-                    >
-                    <div id="UserArea"></div>
+                    <img src="./img/logo.png" class="logo">
                 </div>
 
-                <ul class="menu">
+                <ul class="menu" id="menu">
                     <li><a href="#Solucoes">Soluções</a></li>
                     <li><a href="#Planos">Planos</a></li>
                     <li><a href="./login.html">Login</a></li>
                 </ul>
 
+                <button class="menu-toggle" id="menuToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <!--<div id="userArea"></div>-->
+
             </nav>
+            
         </div>
     </header>
     

@@ -5,41 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Signup</title>
     <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .input-group{
+            position: relative;
+        }
+
+        .input-group input{
+            width: 100%;
+            padding-right: 40px;
+        }
+
+        .toggle-password{
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
 </head>
+
 <body>
-    <form class="auth-form" id="signupForm">
 
-        <label>Username</label>
-        <input id="username" type="text" required>
+<form class="auth-form" id="signupForm">
 
-        <label>Email</label>
-        <input id="email" type="email" required>
+    <label>Username</label>
+    <input id="username" type="text" required>
 
-        <label>Password</label>
+    <label>Email</label>
+    <input id="email" type="email" required>
+
+    <label>Password</label>
+    <div class="input-group">
         <input id="password" type="password" required>
+        <button type="button" class="toggle-password" data-target="password">👁️</button>
+    </div>
 
-        <label>Confirm Password</label>
+    <label>Confirm Password</label>
+    <div class="input-group">
         <input id="confirmPassword" type="password" required>
+        <button type="button" class="toggle-password" data-target="confirmPassword">👁️</button>
+    </div>
 
-        <p class="error" id="errorMsg"></p>
+    <p class="error" id="errorMsg"></p>
 
-        <button type="submit" class="btn auth-btn">Create Account</button>
+    <button type="submit" class="btn auth-btn">Create Account</button>
 
-        <p class="login-link">
-            Already have an account? 
-            <a href="login.html">Login</a>
-        </p>
+    <p class="login-link">
+        Already have an account? 
+        <a href="login.html">Login</a>
+    </p>
 
-    </form>
-</body>
+</form>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { 
     getAuth, 
     createUserWithEmailAndPassword,
-    updateProfile
+    updateProfile,
+    sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+import { 
+    getFirestore,
+    doc, 
+    setDoc 
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const app = initializeApp({
     apiKey: "AIzaSyDCowNCQIA_GlY44S-7F_oF7TvkQmCSPTM",
@@ -48,6 +84,7 @@ const app = initializeApp({
 });
 
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 const form = document.getElementById("signupForm");
 const errorMsg = document.getElementById("errorMsg");
@@ -75,16 +112,47 @@ form.addEventListener("submit", async (e) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-        // salva nome
         await updateProfile(userCredential.user, {
             displayName: username
         });
 
-        window.location.href = "dashboard.html";
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+            uid: userCredential.user.uid,
+            email: email,
+            name: username,
+            createdAt: new Date()
+        });
+
+        await sendEmailVerification(userCredential.user);
+
+        alert("Check your email to verify your account!");
+
+        window.location.href = "verify-email.html";
 
     } catch (error) {
-        errorMsg.textContent = error.message;
+        if (error.code === "auth/email-already-in-use") {
+            errorMsg.textContent = "This email is already registered. Try logging in.";
+        } else {
+            errorMsg.textContent = error.message;
+        }
     }
 });
+
+/* 👁️ TOGGLE SENHA */
+document.querySelectorAll(".toggle-password").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const input = document.getElementById(btn.dataset.target);
+
+        if (input.type === "password") {
+            input.type = "text";
+            btn.textContent = "🙈";
+        } else {
+            input.type = "password";
+            btn.textContent = "👁️";
+        }
+    });
+});
 </script>
+
+</body>
 </html>

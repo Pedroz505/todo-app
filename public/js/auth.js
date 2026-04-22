@@ -1,6 +1,21 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, signInWithPopup, FacebookAuthProvider } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { onAuthStateChanged } from "firebase-auth";
+
+onAuthStateChanged(auth, (user) => {
+
+if (!user) {
+window.location.href = "login.html";
+return;
+}
+
+if (!user.emailVerified) {
+window.location.href = "verify-email.html";
+return;
+}
+
+});
 
 const firebaseConfig = {
     apiKey: "...",

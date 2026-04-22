@@ -66,6 +66,59 @@ body{
     width: 90px;
 }
 
+/*=============
+  responsividade navbar
+  =============*/
+
+  .menu-toggle{
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.menu-toggle span{
+    width: 25px;
+    height: 3px;
+    background: #000;
+    border-radius: 2px;
+}
+
+/* mobile */
+@media (max-width: 768px){
+
+    .menu-toggle{
+        display: flex;
+        z-index: 1000;
+    }
+
+    .menu{
+        position: absolute;
+        top: 70px;
+        right: 20px;
+        background: var(--color-primary-1);
+        flex-direction: column;
+        padding: 20px;
+        border-radius: 10px;
+        gap: 15px;
+        z-index: 999;
+
+        opacity: 0;
+        transform: translateY(-10px);
+        pointer-events: none;
+
+        transition: 0.3s;
+    }
+
+    .menu.active{
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+}
+
 /*hero*/
 .hero{
     display: flex;
@@ -560,22 +613,60 @@ body{
 
 /* LISTA */
 .task-list{
-    list-style: none;
-    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+/* tablet */
+@media (max-width: 1024px){
+    .task-list{
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* mobile */
+@media (max-width: 768px){
+    .task-list{
+        grid-template-columns: 1fr;
+    }
+
+        .app{
+        flex-direction: column;
+    }
+
+    .sidebar{
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .sidebar ul{
+        display: none; /* simplifica mobile */
+    }
+
+    .main{
+        padding: 20px;
+    }
+
+    .task-input{
+        flex-direction: column;
+    }
 }
 
 .task-item{
     display: flex;
-    justify-content: space-between;
-    padding: 12px;
-    margin-bottom: 10px;
-    background: white;
-    border-radius: 8px;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
 }
 
 .done{
     text-decoration: line-through;
     opacity: 0.6;
+    
 }
 
 /* TASK */
@@ -636,7 +727,7 @@ body{
     border: none;
     font-size: 16px;
     outline: none;
-    background: transparent;
+    color: #000
 }
 
 .task-text.done{
@@ -660,4 +751,132 @@ body{
 
 .task-actions button:hover{
     opacity: 1;
+}
+
+/* MOBILE AJUSTE GERAL */
+@media (max-width: 768px){
+
+    .container{
+        padding: 0 20px;
+    }
+
+    .reviews{
+        flex-direction: column;
+        gap: 30px;
+        text-align: center;
+        grid-template-columns: 1fr;
+    }
+
+    .divider{
+        display: none; /* remove linha no mobile */
+    }
+
+    .hero{
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero-text{
+        max-width: 100%;
+    }
+
+    .hero-text h1{
+        font-size: 36px;
+    }
+
+    .hero-text p{
+        font-size: 18px;
+        max-width: 100%;
+    }
+
+    .hero-media img{
+        width: 100%;
+        max-width: 320px;
+    }
+
+    .feature{
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .feature.reverse{
+        flex-direction: column;
+    }
+
+    .feature-media img{
+        width: 100%;
+    }
+
+    .features-icons{
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .icon-item{
+        flex: 1 1 45%;
+    }
+
+    .footer{
+        flex-direction: column;
+        gap: 30px;
+    }
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* PRIORIDADE */
+.priority {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #FFF;
+}
+
+.priority-high { background: #ff4d4f; }
+.priority-medium { background: #faad14; }
+.priority-low { background: #52c41a; }
+
+/* DATA */
+.date-tag {
+    margin-left: auto;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #f0f0f0;
+}
+
+.date-tag.overdue {
+    background: #ffccc7;
+    color: #a8071a;
+}
+
+.date-tag.no-date {
+    background: #e6f7ff;
+}
+
+/* TEXTO */
+.done {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.task-item {
+    cursor: grab;
+    transition: 0.2s;
+}
+
+.task-item:active {
+    cursor: grabbing;
+    opacity: 0.6;
+}
+
+.task-item:hover {
+    background: #f5f5f5;
 }

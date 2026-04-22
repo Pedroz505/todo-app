@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
     <title>Sign up</title>
+
+    <style>
+        .input-group{
+            position: relative;
+        }
+
+        .input-group input{
+            width: 100%;
+            padding-right: 40px;
+        }
+
+        .toggle-password{
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
 </head>
 
 <body class="auth-body">
@@ -43,7 +65,10 @@
             <input id="email" type="email" required>
 
             <label>Password</label>
-            <input id="password" type="password" required>
+            <div class="input-group">
+                <input id="password" type="password" required>
+                <button type="button" class="toggle-password" data-target="password">👁️</button>
+            </div>
 
             <p class="error" id="errorMsg"></p>
 
@@ -66,7 +91,7 @@
 
         <p class="login-link">
             Already signed up? 
-            <a href="#" onclick="loginUser()">Go to login</a>
+            <a href="login.html">Go to login</a>
         </p>
 
     </div>
@@ -80,7 +105,7 @@ import {
     signInWithPopup, 
     GoogleAuthProvider,
     FacebookAuthProvider,
-    createUserWithEmailAndPassword
+    signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -97,7 +122,7 @@ const googleProvider = new GoogleAuthProvider();
 
 document.getElementById("googleLogin").onclick = async () => {
     try {
-        const result = await signInWithPopup(auth, googleProvider);
+        await signInWithPopup(auth, googleProvider);
         window.location.href = "dashboard.html";
     } catch (error) {
         console.error(error);
@@ -110,7 +135,7 @@ facebookProvider.addScope('public_profile');
 
 document.getElementById("facebookLogin").onclick = async () => {
     try {
-        const result = await signInWithPopup(auth, facebookProvider);
+        await signInWithPopup(auth, facebookProvider);
         window.location.href = "dashboard.html";
     } catch (error) {
         console.error(error);
@@ -119,6 +144,7 @@ document.getElementById("facebookLogin").onclick = async () => {
 
 /* 🔐 EMAIL/SENHA */
 const form = document.querySelector(".auth-form");
+const errorMsg = document.getElementById("errorMsg");
 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -127,15 +153,38 @@ form.addEventListener("submit", async (e) => {
     const password = document.getElementById("password").value;
 
     try {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
-        alert("Conta criada com sucesso!");
+        await user.reload();
+
+        if (!user.emailVerified) {
+            errorMsg.textContent = "Verifique seu email antes de entrar.";
+            return;
+        }
+
         window.location.href = "dashboard.html";
 
     } catch (error) {
-        alert(error.message);
+        errorMsg.textContent = error.message;
         console.error(error);
     }
 });
+
+/* 👁️ TOGGLE SENHA */
+document.querySelectorAll(".toggle-password").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const input = document.getElementById(btn.dataset.target);
+
+        if (input.type === "password") {
+            input.type = "text";
+            btn.textContent = "🙈";
+        } else {
+            input.type = "password";
+            btn.textContent = "👁️";
+        }
+    });
+});
 </script>
+
 </html>

@@ -1,171 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/style.css">
-    <title>Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<title>Dashboard</title>
 </head>
+
 <body class="dashboard-body">
 
 <div class="app">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <h2>ToDoList</h2>
-
         <ul>
             <li class="active">Inbox</li>
             <li>Hoje</li>
             <li>Em breve</li>
         </ul>
-
         <button id="logoutBtn">Logout</button>
     </aside>
 
-    <!-- MAIN -->
     <main class="main">
 
         <header class="main-header">
             <h1>Inbox</h1>
         </header>
 
-        <!-- INPUT -->
         <div class="task-input">
             <input id="taskInput" type="text" placeholder="Adicionar tarefa...">
+            <input id="dueDateInput" type="date">
+
+            <select id="priorityInput">
+                <option value="low">Baixa</option>
+                <option value="medium" selected>Média</option>
+                <option value="high">Alta</option>
+            </select>
+
             <button id="addTask">Adicionar</button>
         </div>
 
-        <!-- LISTA -->
         <ul id="taskList" class="task-list"></ul>
 
     </main>
 
 </div>
 
-</body>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { 
-    getFirestore, collection, addDoc, query, where, getDocs, 
-    updateDoc, deleteDoc, doc 
+    getAuth, 
+    onAuthStateChanged, 
+    signOut,
+    setPersistence,
+    browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+import {
+    getFirestore, collection, addDoc, query,
+    onSnapshot, updateDoc, deleteDoc, doc,
+    orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-const firebaseConfig = {
+/* CONFIG */
+const app = initializeApp({
     apiKey: "AIzaSyDCowNCQIA_GlY44S-7F_oF7TvkQmCSPTM",
     authDomain: "todo-ac586.firebaseapp.com",
     projectId: "todo-ac586",
-};
+});
 
-const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let currentUser = null;
+await setPersistence(auth, browserLocalPersistence);
 
+let currentUser = null;
+let unsubscribe = null;
+let currentFilter = "inbox";
+
+/* ELEMENTOS */
 const taskInput = document.getElementById("taskInput");
+const dueDateInput = document.getElementById("dueDateInput");
+const priorityInput = document.getElementById("priorityInput");
 const addTaskBtn = document.getElementById("addTask");
 const taskList = document.getElementById("taskList");
+const headerTitle = document.querySelector(".main-header h1");
 
-/* 🔐 PROTEÇÃO */
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = "login.html";
-    } else {
-        currentUser = user;
-        carregarTarefas();
-    }
+/* DATA */
+function formatDate(date) {
+    return date.toLocaleDateString("pt-BR");
+}
+
+/* SIDEBAR */
+document.querySelectorAll(".sidebar li").forEach((item, i) => {
+    item.onclick = () => {
+        document.querySelectorAll(".sidebar li").forEach(x => x.classList.remove("active"));
+        item.classList.add("active");
+
+        currentFilter = ["inbox","today","upcoming"][i];
+        headerTitle.textContent = item.textContent;
+
+        carregar();
+    };
 });
 
-/* 🚪 LOGOUT */
+/* AUTH */
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        location.href = "login.html";
+        return;
+    }
+    currentUser = user;
+    carregar();
+});
+
+/* LOGOUT */
 document.getElementById("logoutBtn").onclick = async () => {
     await signOut(auth);
-    window.location.href = "index.html";
+    location.href = "login.html";
 };
 
-/* ➕ CRIAR */
-addTaskBtn.onclick = async () => {
+/* CRIAR */
+async function criar(){
     const text = taskInput.value.trim();
     if (!text) return;
 
-    await addDoc(collection(db, "tasks"), {
-        userId: currentUser.uid,
+    let dueDate = null;
+
+    if (dueDateInput.value) {
+        const [y,m,d] = dueDateInput.value.split("-");
+        dueDate = new Date(y, m-1, d);
+    }
+
+    await addDoc(collection(db,"users",currentUser.uid,"tasks"), {
         text,
-        done: false,
-        createdAt: new Date()
+        completed:false,
+        createdAt: serverTimestamp(),
+        dueDate,
+        priority: priorityInput.value,
+        order: Date.now()
     });
 
-    taskInput.value = "";
-    carregarTarefas();
-};
+    taskInput.value="";
+    dueDateInput.value="";
+}
 
-/* 📥 LISTAR */
-async function carregarTarefas(){
-    taskList.innerHTML = "";
+addTaskBtn.onclick = criar;
+taskInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") criar();
+});
+
+/* LISTAR */
+function carregar(){
+
+    if(unsubscribe) unsubscribe();
 
     const q = query(
-        collection(db, "tasks"),
-        where("userId", "==", currentUser.uid)
+        collection(db,"users",currentUser.uid,"tasks"),
+        orderBy("order","asc")
     );
 
-    const snapshot = await getDocs(q);
+    unsubscribe = onSnapshot(q, snap => {
 
-    snapshot.forEach(docSnap => {
-        const data = docSnap.data();
+        taskList.innerHTML="";
 
-        const li = document.createElement("li");
-        li.className = "task-item";
+        const todayStart = new Date();
+        todayStart.setHours(0,0,0,0);
 
-        li.innerHTML = `
-            <div class="task-left">
-                <button class="check ${data.done ? "checked" : ""}"></button>
+        const todayEnd = new Date();
+        todayEnd.setHours(23,59,59,999);
 
-                <input 
-                    class="task-text ${data.done ? "done" : ""}" 
-                    value="${data.text}" 
-                    disabled
-                >
-            </div>
+        const priorityWeight = {high:3, medium:2, low:1};
 
-            <div class="task-actions">
-                <button class="editBtn">✏️</button>
-                <button class="deleteBtn">🗑</button>
-            </div>
-        `;
+        let tasks = [];
 
-        const input = li.querySelector(".task-text");
-        const editBtn = li.querySelector(".editBtn");
+        snap.forEach(d=>{
+            const data = d.data();
+            if(!data.createdAt) return;
+            tasks.push({id:d.id,...data});
+        });
 
-        editBtn.onclick = () => {
-            input.disabled = false;
-            input.focus();
-        };
+        tasks.sort((a,b)=>{
+            if(priorityWeight[a.priority] !== priorityWeight[b.priority]){
+                return priorityWeight[b.priority]-priorityWeight[a.priority];
+            }
 
-        /* salva ao sair do campo */
-        input.onblur = async () => {
-            input.disabled = true;
+            const dA = a.dueDate?.toDate?.() || new Date(9999,0,1);
+            const dB = b.dueDate?.toDate?.() || new Date(9999,0,1);
 
-            await updateDoc(doc(db, "tasks", docSnap.id), {
-                text: input.value
+            return dA - dB;
+        });
+
+        let dragged = null;
+
+        tasks.forEach(task=>{
+
+            const due = task.dueDate?.toDate?.() || null;
+
+            /* FILTROS */
+            if(currentFilter==="today" && (!due || due<todayStart || due>todayEnd)) return;
+            if(currentFilter==="upcoming" && (!due || due<=todayEnd)) return;
+            if(currentFilter==="inbox" && due) return;
+
+            const li = document.createElement("li");
+            li.className="task-item";
+            li.draggable=true;
+            li.dataset.id=task.id;
+
+            /* CHECK */
+            const checkbox=document.createElement("input");
+            checkbox.type="checkbox";
+            checkbox.checked=task.completed;
+
+            /* TEXTO (EDITÁVEL COM DUBLE CLICK) */
+            const text=document.createElement("span");
+            text.textContent=task.text;
+            text.className="task-text";
+
+            if(task.completed) text.classList.add("done");
+
+            text.addEventListener("dblclick", () => {
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = task.text;
+                input.className = "task-text";
+
+                li.replaceChild(input, text);
+                input.focus();
+
+                input.addEventListener("blur", async () => {
+                    const newText = input.value.trim();
+                    if (!newText) return;
+
+                    await updateDoc(
+                        doc(db,"users",currentUser.uid,"tasks",task.id),
+                        { text: newText }
+                    );
+                });
+
+                input.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") input.blur();
+                });
             });
-        };
 
-        li.querySelector(".check").onclick = async () => {
-            await updateDoc(doc(db, "tasks", docSnap.id), {
-                done: !data.done
+            /* DATA */
+            const date=document.createElement("span");
+            date.textContent = due ? formatDate(due) : "Sem data";
+            date.className="date-tag";
+
+            /* PRIORIDADE */
+            const priority=document.createElement("span");
+            priority.textContent=task.priority;
+            priority.className=`priority priority-${task.priority}`;
+
+            /* DELETE */
+            const del=document.createElement("button");
+            del.textContent="🗑";
+
+            li.append(checkbox, priority, text, date, del);
+
+            checkbox.onchange=()=>updateDoc(doc(db,"users",currentUser.uid,"tasks",task.id),{
+                completed:checkbox.checked
             });
-            carregarTarefas();
-        };
 
-        li.querySelector(".deleteBtn").onclick = async () => {
-            await deleteDoc(doc(db, "tasks", docSnap.id));
-            carregarTarefas();
-        };
+            del.onclick=()=>deleteDoc(doc(db,"users",currentUser.uid,"tasks",task.id));
 
-        taskList.appendChild(li);
+            /* DRAG */
+            li.ondragstart=()=>dragged=li;
+            li.ondragover=e=>e.preventDefault();
+
+            li.ondrop=async ()=>{
+                if(!dragged) return;
+
+                await updateDoc(doc(db,"users",currentUser.uid,"tasks",dragged.dataset.id),{
+                    order: Date.now()
+                });
+            };
+
+            taskList.appendChild(li);
+        });
+
     });
 }
 </script>
+
+</body>
 </html>
