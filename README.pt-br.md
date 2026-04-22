@@ -1,20 +1,22 @@
-# Aplicativo de Lista de Tarefas
+# Todo App
 
-Este é um aplicativo simples para gerenciar suas tarefas e aumentar sua produtividade.
+Este aplicativo permite que você gerencie suas tarefas de forma eficiente, esteja você em casa ou em movimento.
 
 ## Funcionalidades
-- Adicionar novas tarefas
-- Marcar tarefas como concluídas
-- Remover tarefas
 
-## Como Usar
-1. Clone o repositório: `git clone https://github.com/Pedroz505/todo-app.git`
-2. Navegue até o diretório: `cd todo-app`
-3. Instale as dependências: `npm install`
-4. Execute o aplicativo: `npm start`
+- Adicione novas tarefas
+- Marque tarefas como concluídas
+- Remova tarefas que não são mais necessárias
 
-## Contribuição
-Sinta-se à vontade para contribuir com o projeto, criando um fork e enviando um pull request! 
+## Como começar
 
-## Licença
-Este projeto está licenciado sob a MIT License.
+1. Clone o repositório usando `git clone https://github.com/Pedorz505/todo-app.git`
+2. Navegue até o diretório do projeto  usando `cd todo-app`
+3. Instale as dependências usando `npm install`
+4. Inicie o aplicativo com `npm start`
+
+Agora você pode começar a usar o aplicativo Todo! 
+
+## Contribuindo
+
+Se você deseja contribuir, sinta-se à vontade para abrir um problema ou um pedido de pull! Agradecemos suas contribuições!
