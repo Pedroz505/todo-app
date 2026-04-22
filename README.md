@@ -48,7 +48,7 @@ A simple and intuitive Todo application built using modern web technologies.
    ```
 
 ## Usage Guide
-- Open your browser and go to `http://localhost:3000`.
+- Open your browser and go to `https://todo-ac586.web.app/`.
 - You can start adding tasks right away.
 
 ## Configuration
